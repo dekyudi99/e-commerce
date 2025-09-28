@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Products;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -74,7 +75,8 @@ class ProductsController extends Controller
             if ($request->hasFile('image')) {
                 $imageFile = $request->file('image');
                 // Buat nama file yang unik
-                $imageName = time() . '_' . $imageFile->getClientOriginalName();
+                // $imageName = time() . '_' . $imageFile->getClientOriginalName();
+                $imageName = Str::uuid()->toString() . '.' . $imageFile->getClientOriginalExtension();
 
                 // Pindahkan file ke public/uploads/product
                 $imageFile->move('uploads/product', $imageName);
