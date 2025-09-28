@@ -16,29 +16,33 @@ class CorsMiddleware
      */
     public function handle($request, Closure $next)
     {
-        $headers = [
-            'Access-Control-Allow-Origin'      => '*',
-            'Access-Control-Allow-Methods'     => 'POST, GET, OPTIONS, PUT, DELETE',
-            'Access-Control-Allow-Credentials' => 'true',
-            'Access-Control-Max-Age'           => '86400',
-            'Access-Control-Allow-Headers'     => 'Content-Type, Authorization, X-Requested-With'
+        $allowedOrigins = [
+            'https://goagrolink.com',
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
         ];
 
-        if ($request->isMethod('OPTIONS')) {
-            return response()->json('{"method":"OPTIONS"}', 200, $headers);
-        }
+        $origin = $request->header('Origin');
 
-        $response = $next($request);
+        if (in_array($origin, $allowedOrigins)) {
+            $headers = [
+                'Access-Control-Allow-Origin'      => $origin,
+                'Access-Control-Allow-Methods'     => 'POST, GET, OPTIONS, PUT, DELETE',
+                'Access-Control-Allow-Credentials' => 'true',
+                'Access-Control-Max-Age'           => '86400',
+                'Access-Control-Allow-Headers'     => 'Content-Type, Authorization, X-Requested-With'
+            ];
 
-        // Gunakan metode yang sesuai untuk menambahkan header pada semua jenis response
-        foreach ($headers as $key => $value) {
-            if (method_exists($response, 'header')) {
-                $response->header($key, $value);
-            } elseif ($response instanceof BinaryFileResponse) {
-                $response->headers->set($key, $value);
+            if ($request->isMethod('OPTIONS')) {
+                return response()->json('{"method":"OPTIONS"}', 200, $headers);
             }
-        }
 
-        return $response;
+            $response = $next($request);
+            foreach($headers as $key => $value) {
+                $response->header($key, $value);
+            }
+
+            return $response;
+        }
     }
 }
