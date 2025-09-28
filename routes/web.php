@@ -15,36 +15,21 @@ $router->group(['middleware' => ['auth:api', 'role:admin']], function () use ($r
     $router->get('/users/getall', 'UsersController@index');
     $router->get('/users/detail/{id}', 'UsersController@show');
     $router->delete('/users/delete/{id}', 'UsersController@destroy');
-
-    // Contents Management
-    $router->post('/contents/save', 'ContentsController@store');
-    $router->post('/contents/update/{id}', 'ContentsController@update');
-    $router->delete('/contents/delete/{id}', 'ContentsController@destroy');
     
     // Verifikasi user
     $router->post('/shop/validasi/{id}', 'ShopController@validasi');
 
-    // Melihat semua data
+    // Melihat semua order
     $router->get('/order/getall', 'OrdersController@orders');
 
-    // Melihat semua product
-    $router->get('/product/getall', 'ProductsController@index');
-
-    // Melihat semua toko dan detail
-    $router->get('/shop/shopall', 'ShopController@showAll');
-    $router->get('/shop/detail/{id}', 'ShopController@showDetail');
-    $router->delete('/shop/delete/{id}', 'ShopController@destroy');
+    // Hapus User
+    $router->delete('/users/deleteProfile', 'UsersController@deleteMe');
 });
 
-$router->group(['middleware' => ['auth:api', 'role:normal,admin']], function () use ($router) {
+$router->group(['middleware' => ['auth:api', 'role:farmer,worker,driver,admin']], function () use ($router) {
     // Profile User
-    $router->post('/user-profile', 'AuthController@me');
+    $router->get('/user-profile', 'AuthController@me');
     $router->post('/users/updateProfile', 'UsersController@updateMe');
-    $router->delete('/users/deleteProfile', 'UsersController@deleteMe');
-
-    // Contents view
-    $router->get('/contents/getall', 'ContentsController@index');
-    $router->get('/contents/detail/{id}', 'ContentsController@show');
     
     //Refresh Token
     $router->post('/refresh', 'AuthController@refresh');
@@ -52,45 +37,43 @@ $router->group(['middleware' => ['auth:api', 'role:normal,admin']], function () 
     //Logout
     $router->post('/logout', 'AuthController@logout');
     
-    // Progress User
-    $router->post('/progress/{id}', 'UserProgressController@index');
-    
     // Get & Detail & Delete Product
     $router->get('/product/getall', 'ProductsController@index');
-    $router->get('/product/detail/{id}', 'ProductsController@show');
+    $router->get('/product/show/{id}', 'ProductsController@show');
     $router->delete('/product/delete/{id}', 'ProductsController@destroy');
 });
 
-$router->group(['middleware' => ['auth:api', 'role:normal']], function () use ($router) {
-    // Management Product
-    $router->get('/product/myproduct', 'ProductsController@myProducts');
-    $router->post('/product/save', 'ProductsController@store');
-    $router->post('/product/update/{id}', 'ProductsController@update');
-
-    // Membuat dan menampilkan toko
-    $router->post('/shop/save', 'ShopController@store');
-    $router->get('/shop/show', 'ShopController@show');
-    $router->post('/shop/update', 'ShopController@update');
-    $router->get('/shop/orders', 'OrdersController@orderShop');
-
+$router->group(['middleware' => ['auth:api', 'role:farmer,worker,driver']], function () use ($router) {
     // Menambahkan dan melihat product ke cart
-    $router->post('/order/cart/{id}', 'OrdersController@cart');
-    $router->get('/order/cart', 'OrdersController@mycart');
+    $router->post('/cart/add/{id}', 'OrdersController@cart');
+    $router->get('/cart/mycart', 'OrdersController@mycart');
 
     // Pesan product dari cart
-    $router->post('/order/orderCart', 'OrdersController@orderCart');
+    $router->post('/cart/order', 'OrdersController@orderCart');
 
     // Pesan product langsung
-    $router->post('/order/directOrder/{id}', 'OrdersController@directOrder');
+    $router->post('/order/direct/{id}', 'OrdersController@directOrder');
 
     // Menampilkan pesanan anda
     $router->get('/order/myorder', 'OrdersController@myorder');
 
-    // Rute ini akan dipanggil oleh Flutter saat user menekan tombol bayar
+    //Menambah dan Update Review
+    $router->post('/review/add/{id}', 'ReviewController@store');
+    $router->post('/review/update/{id}', 'ReviewController@update');
+});
+
+$router->group(['middleware' => ['auth:api', 'role:farmer']], function () use ($router) {
+    // Management Product
+    $router->get('/product/myproduct', 'ProductsController@myProducts');
+    $router->post('/product/add', 'ProductsController@store');
+    $router->post('/product/update/{id}', 'ProductsController@update');
+
+    // Menampilkan pesanan masuk
+    $router->get('/order/in', 'OrdersController@orderIn');
 });
 
 // Rute ini akan dipanggil oleh server Midtrans
-$router->post('/orders/{id}/pay', 'PaymentController@createMidtransTransaction');
+$router->post('/payment/order/{id}', 'PaymentController@createMidtransTransaction');
 $router->post('/midtrans/callback', 'MidtransCallbackController@handle');
 
 // $router->get('/profile/{filename}', function ($filename) {

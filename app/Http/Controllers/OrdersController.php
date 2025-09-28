@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\PaymentController;
 
 class OrdersController extends Controller
 {
@@ -65,6 +66,7 @@ class OrdersController extends Controller
         }
     }
 
+    // Melihat Keranjang saya
     public function mycart() {
         $id = Auth::id();
         $cart = Cart::where('user_id', $id)->with('product')->get();
@@ -149,10 +151,24 @@ class OrdersController extends Controller
                 return $newOrder;
             });
 
+            // 1. Buat instance dari PaymentController
+            $paymentController = new PaymentController();
+
+            // 2. Panggil fungsi untuk membuat transaksi Midtrans, kirim ID order yang baru dibuat
+            $paymentResponse = $paymentController->createMidtransTransaction($order->id);
+
+            // 3. Ambil konten dari response JSON yang dikembalikan oleh PaymentController
+            $paymentData = json_decode($paymentResponse->getContent(), true);
+
+            // Ambil URL pembayaran, atau null jika terjadi error
+            $paymentUrl = $paymentData['payment_url'] ?? null;
+
+            // 4. Modifikasi response untuk menyertakan payment_url
             return response()->json([
                 'success' => true,
-                'message' => 'Pesanan berhasil dibuat.',
-                'order' => $order
+                'message' => 'Pesanan berhasil dibuat. Lanjutkan ke pembayaran.',
+                'order' => $order,
+                'payment_url' => $paymentUrl // <-- TAMBAHKAN INI
             ], 201);
 
         } catch (\Exception $e) {
@@ -218,11 +234,24 @@ class OrdersController extends Controller
                 return $newOrder; // Kembalikan order yang baru dibuat
             });
 
-            // 5. Kembalikan respons sukses
+            // 1. Buat instance dari PaymentController
+            $paymentController = new PaymentController();
+
+            // 2. Panggil fungsi untuk membuat transaksi Midtrans
+            $paymentResponse = $paymentController->createMidtransTransaction($order->id);
+
+            // 3. Ambil konten dari response JSON
+            $paymentData = json_decode($paymentResponse->getContent(), true);
+            
+            // Ambil URL pembayaran, atau null jika terjadi error
+            $paymentUrl = $paymentData['payment_url'] ?? null;
+
+            // 4. Modifikasi response untuk menyertakan payment_url
             return response()->json([
                 'success' => true,
-                'message' => 'Pesanan berhasil dibuat.',
-                'order' => $order
+                'message' => 'Pesanan berhasil dibuat. Lanjutkan ke pembayaran.',
+                'order' => $order,
+                'payment_url' => $paymentUrl // <-- TAMBAHKAN INI
             ], 201);
 
         } catch (\Exception $e) {
@@ -271,33 +300,32 @@ class OrdersController extends Controller
         ]);
     }
 
-    public function orderShop()
+    public function orderIn()
     {
-        $shop = auth()->user()->shop;
+        // $product sekarang adalah KOLEKSI produk
+        $product = auth()->user()->product;
 
-        // Jika pengguna tidak memiliki toko, kembalikan array kosong
-        if (!$shop) {
+        // Cek jika koleksinya kosong
+        if ($product->isEmpty()) {
             return response()->json(['data' => []]);
         }
 
-        // 1. Ambil semua ID produk dari toko ini
-        $productIds = $shop->product()->pluck('id')->toArray();
+        // 1. Ambil semua ID produk langsung dari koleksi
+        $productIds = $product->pluck('id')->toArray(); // <-- PERBAIKAN DI SINI
 
         // 2. Cari semua order_id unik yang memiliki item produk dari toko ini
-        //    Kita hanya perlu ID pesanan-nya, dan pastikan tidak ada duplikat.
         $orderIds = \App\Models\Order_Item::whereIn('product_id', $productIds)
-                                ->distinct()
-                                ->pluck('order_id');
+                                        ->distinct()
+                                        ->pluck('order_id');
 
         // 3. Ambil data pesanan lengkap berdasarkan ID yang sudah didapat
-        //    dan urutkan dari yang terbaru.
         $orders = \App\Models\Orders::whereIn('id', $orderIds)
-                                ->orderBy('created_at', 'desc')
-                                ->get();
+                                        ->orderBy('created_at', 'desc')
+                                        ->get();
         
         return response()->json([
             'success' => true,
-            'message' => 'Berhasil menampilkan pesanan yang masuk ke toko',
+            'message' => 'Berhasil menampilkan pesanan yang masuk',
             'data'    => $orders,
         ], 200);
     }

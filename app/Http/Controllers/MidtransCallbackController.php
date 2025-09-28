@@ -45,7 +45,7 @@ class MidtransCallbackController extends Controller
         }
         // 4. Tangani notifikasi pembayaran gagal, dibatalkan, atau kedaluwarsa
         else if ($transactionStatus == 'cancel' || $transactionStatus == 'expire' || $transactionStatus == 'deny') {
-            $order->update(['status' => 'cancelled']);
+            $order->update(['status' => 'unpaid']);
         }
 
         // Beri respons sukses ke Midtrans agar tidak mengirim notifikasi berulang

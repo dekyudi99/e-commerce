@@ -8,16 +8,16 @@ use Laravel\Lumen\Auth\Authorizable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
-use App\Models\UserProgress;
-use App\Models\Shop;
 use App\Models\Orders;
+use App\Models\Products;
+use App\Models\Review;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
     use Authenticatable, Authorizable;
 
     protected $table = 'users';
-    protected $fillable = ['name', 'email', 'password', 'role', 'path_image'];
+    protected $fillable = ['name', 'email', 'password', 'phone_number', 'role', 'profile_picture'];
     protected $hidden = ['password'];
     protected $appends = ['image_url'];
 
@@ -27,7 +27,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         if ($this->path_image) 
         {
             // Gunakan helper asset() untuk membuat URL ke folder public/uploads/product
-            return ('https://4bad-182-253-163-199.ngrok-free.app/UMKMConnect/public/uploads/profile/' . $this->path_image);
+            return (env('APP_URL').'/uploads/profile/'.$this->path_image);
         }
 
         // Kembalikan null atau URL gambar default jika tidak ada gambar
@@ -48,15 +48,15 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         ]; // bisa tambahkan data tambahan ke token jika perlu
     }
 
-    public function userProgress() {
-        return $this->hasMany(UserProgress::class, 'user_id', 'id');
-    }
-
-    public function shop() {
-        return $this->hasOne(Shop::class, 'user_id', 'id');
-    }
-
     public function orders() {
         return $this->hasMany(Orders::class, 'user_id', 'id');
+    }
+
+    public function product() {
+        return $this->hasMany(Products::class, 'user_id', 'id');
+    }
+
+    public function review() {
+        return $this->hasMany(Review::class, 'user_id', 'id');
     }
 }

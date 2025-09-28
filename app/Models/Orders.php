@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
-use App\Models\Payments;
 use App\Models\Products;
+use App\Models\Order_Item;
 
 class Orders extends Model
 {
@@ -18,11 +18,12 @@ class Orders extends Model
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    public function payments() {
-        return $this->hasOne(Payments::class, 'order_id', 'id');
+    public function product() {
+        return $this->belongsTo(Products::class, 'order_id', 'id');
     }
 
-    public function product() {
-        return $this->belongsTo(Payments::class, 'order_id', 'id');
+    public function items()
+    {
+        return $this->hasMany(Order_Item::class, 'order_id', 'id');
     }
 }

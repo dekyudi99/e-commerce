@@ -3,13 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Products;
-use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class ProductsController extends Controller
 {
@@ -34,8 +32,7 @@ class ProductsController extends Controller
     public function myProducts()
     {
         $id = Auth::id();
-        $user = User::whereId($id)->first();
-        $product = Products::where('shop_id', $user->shop->id)->get();
+        $product = Products::where('user_id', $id)->get();
 
         if (!$product) {
             return response()->json([
@@ -60,6 +57,7 @@ class ProductsController extends Controller
             'category'     => 'required',
             'price'        => 'required|numeric',
             'stock'        => 'required|numeric',
+            'satuan'       => ['required', Rule::in(['kg', 'g', 'biji', 'ikat', 'tandan', 'liter'])],
             'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -71,14 +69,6 @@ class ProductsController extends Controller
             ], 422);
         } else {
             $id = Auth::id();
-            $user = User::whereId($id)->first();
-
-            if (!$user->shop || $user->shop->status !== "Telah Terverifikasi") {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Anda harus memiliki toko yang sudah terverifikasi untuk melakukan aksi ini.',
-                ], 403);
-            }
 
             $imagePathForDb = 'default.png'; // Gambar default jika tidak ada upload
             if ($request->hasFile('image')) {
@@ -94,13 +84,14 @@ class ProductsController extends Controller
             }
 
             $product = Products::create([
-                'shop_id'     => $user->shop->id,
+                'user_id'     => $id,
                 'title'       => $request->input('title'),
                 'description' => $request->input('description'),
                 'location'    => $request->input('location'),
                 'category'    => $request->input('category'),
                 'price'       => $request->input('price'),
                 'stock'       => $request->input('stock'),
+                'satuan'      => $request->input('satuan'),
                 'image'       => $imagePathForDb,
             ]);
 
@@ -140,6 +131,14 @@ class ProductsController extends Controller
     public function update(Request $request, $id)
     {
         $product = Products::find($id);
+        $user_id= Auth::id();
+
+        if ($user_id!=$product->user_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak berhak mengedit produk ini',
+            ], 422);
+        }
 
         if (!$product) {
             return response()->json([
@@ -218,6 +217,15 @@ class ProductsController extends Controller
     public function destroy($id)
     {
         $product = Products::whereId($id)->first();
+        $user_id= Auth::id();
+        
+        if ($user_id!=$product->user_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak berhak menghapus produk ini',
+            ], 422);
+        }
+
         $product->delete();
 
         if ($product) {

@@ -13,17 +13,17 @@ return new class extends Migration
     {
         Schema::create('product', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('shop_id');
+            $table->unsignedBigInteger('user_id');
             $table->string('title');
             $table->text('description');
             $table->text('location');
             $table->text('category');
             $table->integer('price');
             $table->integer('stock');
+            $table->enum('satuan', ['kg', 'g', 'biji', 'ikat', 'tandan', 'liter']);
             $table->string('image');
-            $table->float('rating')->nullable();
             $table->timestamps();
-            $table->foreign('shop_id')->references('id')->on('shop')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

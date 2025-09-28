@@ -16,8 +16,12 @@ return new class extends Migration
             $table->String('name');
             $table->String('email')->unique();
             $table->String('password');
-            $table->String('role')->default('normal');
-            $table->String('path_image')->nullable();
+            $table->String('phone_number');
+            $table->enum('role', ['farmer', 'worker', 'driver', 'admin', 'cs'])->nullable();
+            $table->text('profile_picture')->nullable();
+            $table->boolean('is_active')->nullable();
+            $table->boolean('email_verrified')->nullable();
+            $table->boolean('phone_verrified')->nullable();
             $table->timestamps();
         });
     }

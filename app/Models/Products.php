@@ -3,34 +3,34 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Shop;
+use App\Models\User;
 use App\Models\Order_Item;
 use App\Models\Cart;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Review;
 
 class Products extends Model
 {
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'average_rating'];
     protected $table = 'product';
     protected $fillable = [
-        'shop_id', 'title', 'description', 'location', 'category', 'price', 'stock', 'image', 'rating'
+        'user_id', 'title', 'description', 'location', 'category', 'price', 'stock', 'satuan', 'image',
     ];
 
     public function getImageUrlAttribute()
     {
-        // 'image' adalah nama kolom di database Anda yang berisi nama file
         if ($this->image) 
         {
-            // Gunakan helper asset() untuk membuat URL ke folder public/uploads/product
-            return ('https://4bad-182-253-163-199.ngrok-free.app/UMKMConnect/public/uploads/product/' . $this->image);
+            return (env('APP_URL').'/uploads/product/' . $this->image);
         }
-
-        // Kembalikan null atau URL gambar default jika tidak ada gambar
         return null;
     }
 
+    public function getAverageRatingAttribute() {
+        return $this->review()->avg('rating');
+    }
+
     public function user() {
-        return $this->belongsTo(Shop::class, 'shop_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     public function orderItem() {
@@ -39,5 +39,9 @@ class Products extends Model
 
     public function cart() {
         return $this->hasMany(Cart::class, 'product_id', 'id');
+    }
+
+    public function review() {
+        return $this->hasMany(Review::class, 'product_id', 'id');
     }
 }

@@ -11,6 +11,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -45,9 +46,11 @@ class AuthController extends Controller
 
     public function register(Request $request) {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
+            'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
+            'password' => 'required|string|min:8',
+            'role' => ['required', Rule::in(['farmer', 'worker', 'driver'])],
+            'phone_number' => 'nullable|numeric|digits_between:10,15',
         ]);
 
         if ($validator->fails()) {
@@ -61,6 +64,8 @@ class AuthController extends Controller
                 'name' => $request->input('name'),
                 'email' => $request->input('email'),
                 'password' => Hash::make($request->input('password')),
+                'role' => $request->input('role'),
+                'phone_number' => $request->input('phone_number'),
             ]);
     
             if (!$user) {
