@@ -37,9 +37,7 @@ $router->group(['middleware' => ['auth:api', 'role:farmer,worker,driver,admin']]
     //Logout
     $router->post('/logout', 'AuthController@logout');
     
-    // Get & Detail & Delete Product
-    $router->get('/product/getall', 'ProductsController@index');
-    $router->get('/product/show/{id}', 'ProductsController@show');
+    // Hapus Product
     $router->delete('/product/delete/{id}', 'ProductsController@destroy');
 });
 
@@ -53,7 +51,7 @@ $router->group(['middleware' => ['auth:api', 'role:farmer,worker,driver']], func
 
     // Pesan product langsung
     $router->post('/order/direct/{id}', 'OrdersController@directOrder');
-
+    
     // Menampilkan pesanan anda
     $router->get('/order/myorder', 'OrdersController@myorder');
 
@@ -67,10 +65,14 @@ $router->group(['middleware' => ['auth:api', 'role:farmer']], function () use ($
     $router->get('/product/myproduct', 'ProductsController@myProducts');
     $router->post('/product/add', 'ProductsController@store');
     $router->post('/product/update/{id}', 'ProductsController@update');
-
+    
     // Menampilkan pesanan masuk
     $router->get('/order/in', 'OrdersController@orderIn');
 });
+
+// Get & Detail Product
+$router->get('/product/getall', 'ProductsController@index');
+$router->get('/product/show/{id}', 'ProductsController@show');
 
 // Rute ini akan dipanggil oleh server Midtrans
 $router->post('/payment/order/{id}', 'PaymentController@createMidtransTransaction');

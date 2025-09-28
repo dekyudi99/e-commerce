@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Orders; // Pastikan nama model Anda Order, bukan Orders
+use App\Models\Orders;
 use Midtrans\Config;
 use Midtrans\Notification;
 use Illuminate\Http\Request;
@@ -40,7 +40,6 @@ class MidtransCallbackController extends Controller
 
         // 3. Tangani notifikasi pembayaran sukses
         if (($transactionStatus == 'capture' || $transactionStatus == 'settlement') && $fraudStatus == 'accept') {
-            // Update status pesanan di database Anda menjadi 'paid'
             $order->update(['status' => 'paid']);
         }
         // 4. Tangani notifikasi pembayaran gagal, dibatalkan, atau kedaluwarsa
