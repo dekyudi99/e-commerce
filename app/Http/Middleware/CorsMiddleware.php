@@ -12,7 +12,6 @@ class CorsMiddleware
             'https://goagrolink.com',
             'http://localhost:5173',
             'http://127.0.0.1:5173',
-            'https://8225a788d028.ngrok-free.app',
         ];
 
         $origin = $request->header('Origin');
