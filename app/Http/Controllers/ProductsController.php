@@ -59,7 +59,8 @@ class ProductsController extends Controller
             'price'        => 'required|numeric',
             'stock'        => 'required|numeric',
             'satuan'       => ['required', Rule::in(['kg', 'g', 'biji', 'ikat', 'tandan', 'liter'])],
-            'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image'       => 'nullable|array|max:5',
+            'image.*'     => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -69,24 +70,24 @@ class ProductsController extends Controller
                 'data'    => $validator->errors()
             ], 422);
         } else {
-            $id = Auth::id();
 
-            $imagePathForDb = 'default.png'; // Gambar default jika tidak ada upload
+            $imagePaths = [];
+
             if ($request->hasFile('image')) {
-                $imageFile = $request->file('image');
-                // Buat nama file yang unik
-                // $imageName = time() . '_' . $imageFile->getClientOriginalName();
-                $imageName = Str::uuid()->toString() . '.' . $imageFile->getClientOriginalExtension();
+                foreach ($request->file('image') as $imageFile) {
+                    $imageName = Str::uuid()->toString() . '.' . $imageFile->getClientOriginalExtension();
+                    $imageFile->move('uploads/product', $imageName);
+                    $imagePaths[] = $imageName;
+                }
+            }
 
-                // Pindahkan file ke public/uploads/product
-                $imageFile->move('uploads/product', $imageName);
-
-                // Ini adalah nama file yang akan Anda simpan di kolom 'image' database
-                $imagePathForDb = $imageName;
+            // Jika tidak ada upload, pakai default
+            if (empty($imagePaths)) {
+                $imagePaths[] = 'default.png';
             }
 
             $product = Products::create([
-                'user_id'     => $id,
+                'user_id'     => Auth::id(),
                 'title'       => $request->input('title'),
                 'description' => $request->input('description'),
                 'location'    => $request->input('location'),
@@ -94,7 +95,7 @@ class ProductsController extends Controller
                 'price'       => $request->input('price'),
                 'stock'       => $request->input('stock'),
                 'satuan'      => $request->input('satuan'),
-                'image'       => $imagePathForDb,
+                'image'      => $imagePaths,
             ]);
 
             if ($product) {
@@ -156,7 +157,8 @@ class ProductsController extends Controller
             'category'     => 'required',
             'price'        => 'required|numeric',
             'stock'        => 'required|numeric',
-            'image'        => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image'       => 'nullable|array|max:5',
+            'image.*'     => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -167,46 +169,41 @@ class ProductsController extends Controller
             ], 422);
         }
 
-        $imagePathForDb = $product->image; // Ambil nama gambar yang sudah ada
+        $imagePaths = json_decode($product->images, true) ?? [];
 
         if ($request->hasFile('image')) {
-            // 1. Hapus gambar lama jika ada (dan bukan gambar default)
-            if ($product->image && $product->image != 'default.png') {
-                $oldImagePath = ('uploads/product/' . $product->image);
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
+            // Hapus gambar lama (jika bukan default)
+            foreach ($imagePaths as $oldImage) {
+                if ($oldImage !== 'default.png' && file_exists('uploads/product/' . $oldImage)) {
+                    unlink('uploads/product/' . $oldImage);
                 }
             }
 
-            // 2. Simpan gambar baru (logika sama seperti store)
-            $imageFile = $request->file('image');
-            $imageName = time() . '_' . $imageFile->getClientOriginalName();
-            $imageFile->move('uploads/product', $imageName);
-            
-            $imagePathForDb = $imageName; // Update dengan nama file baru
+            $imagePaths = []; // reset
+            foreach ($request->file('image') as $imageFile) {
+                $imageName = Str::uuid()->toString() . '.' . $imageFile->getClientOriginalExtension();
+                $imageFile->move('uploads/product', $imageName);
+                $imagePaths[] = $imageName;
+            }
         }
 
-        $id_user = Auth::id();
-
-        $productData = [
-            'user_id'     => $id_user,
+        $product->update([
             'title'       => $request->input('title'),
             'description' => $request->input('description'),
             'location'    => $request->input('location'),
             'category'    => $request->input('category'),
             'price'       => $request->input('price'),
-            'stok'        => $request->input('stok'),
-            'image'       => $imagePathForDb,
-        ];
+            'stock'       => $request->input('stock'),
+            'satuan'      => $request->input('satuan'),
+            'image'       => $imagePaths,
+        ]);
 
-        $updated = $product->update($productData);
 
-        if ($updated) {
-            $updatedProduct = Products::find($id);
+        if ($product) {
             return response()->json([
                 'success' => true,
                 'message' => 'Product Berhasil Diupdate!',
-                'data'    => $updatedProduct,
+                'data'    => $product,
             ], 200);
         } else {
             return response()->json([

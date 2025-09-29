@@ -15,14 +15,19 @@ class Products extends Model
     protected $fillable = [
         'user_id', 'title', 'description', 'location', 'category', 'price', 'stock', 'satuan', 'image',
     ];
+    protected $casts = [
+        'image' => 'array',
+    ];
 
     public function getImageUrlAttribute()
     {
-        if ($this->image) 
+        if ($this->image && is_array($this->image)) 
         {
-            return (env('APP_URL').'/uploads/product/' . $this->image);
+            return array_map(function($img) {
+                return env('APP_URL') . '/uploads/product/' . $img;
+            }, $this->image);
         }
-        return null;
+        return [];
     }
 
     public function getAverageRatingAttribute() {
