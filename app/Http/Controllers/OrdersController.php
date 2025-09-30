@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\PaymentController;
 
+use function PHPSTORM_META\map;
+
 class OrdersController extends Controller
 {
     // Menambahkan produk ke cart
@@ -69,7 +71,7 @@ class OrdersController extends Controller
     // Melihat Keranjang saya
     public function mycart() {
         $id = Auth::id();
-        $cart = Cart::where('user_id', $id)->with('product')->get();
+        $cart = Cart::where('user_id', $id)->with(['product', 'user'])->get();
 
         if (!$cart) {
             return response()->json([
@@ -78,10 +80,21 @@ class OrdersController extends Controller
             ], 500);
         }
 
+        $customCart = $cart->map(function($item) {
+            return [
+                'id' => $item->product_id,
+                'name' => $item->product->title,
+                'price' => $item->product->price,
+                'farmer' => $item->user->name,
+                'amount' => $item->quantity,
+                'image' => $item->product->image,
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'message' => 'Berhasil mengambil data cart',
-            'data' => $cart,
+            'data' => $customCart,
         ]);
     }
 

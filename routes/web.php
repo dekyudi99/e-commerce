@@ -73,6 +73,7 @@ $router->group(['middleware' => ['auth:api', 'role:farmer']], function () use ($
 // Get & Detail Product
 $router->get('/product/getall', 'ProductsController@index');
 $router->get('/product/show/{id}', 'ProductsController@show');
+$router->get('/me', 'AuthController@me');
 
 // Rute ini akan dipanggil oleh server Midtrans
 $router->post('/payment/order/{id}', 'PaymentController@createMidtransTransaction');

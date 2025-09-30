@@ -37,8 +37,14 @@ class AuthController extends Controller
         $credentials = $request->only(['email', 'password']);
         $token = Auth::attempt($credentials);
 
-        if (! $token) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        $email = $request->input('email');
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            return response()->json(['message' => 'Email belum terdaftar, silakan daftar terlebih dahulu'], 404);
+        }
+
+        if (Hash::check($request->input('password'), $user->password) === false) {
+            return response()->json(['message' => 'Email atau password salah, silakan coba lagi'], 401);
         }
 
         return $this->respondWithToken($token);
